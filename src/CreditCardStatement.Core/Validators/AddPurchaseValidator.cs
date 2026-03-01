@@ -8,18 +8,18 @@ public class AddPurchaseValidator : AbstractValidator<AddPurchaseDto>
     public AddPurchaseValidator()
     {
         RuleFor(x => x.CardId)
-            .GreaterThan(0).WithMessage("CardId must be greater than 0.");
+            .GreaterThan(0).WithMessage("Debe seleccionar una tarjeta válida.");
 
         RuleFor(x => x.Amount)
-            .GreaterThan(0).WithMessage("Amount must be greater than 0.");
+            .GreaterThan(0).WithMessage("El monto debe ser mayor a $0.00.");
 
         RuleFor(x => x.Description)
-            .NotEmpty().WithMessage("Description is required.")
-            .MaximumLength(200).WithMessage("Description cannot exceed 200 characters.");
+            .NotEmpty().WithMessage("La descripción de la compra es requerida.")
+            .MaximumLength(200).WithMessage("La descripción no puede exceder 200 caracteres.");
 
         RuleFor(x => x.TxDate)
-            .NotEmpty().WithMessage("Transaction date is required.")
+            .NotEmpty().WithMessage("La fecha de la compra es requerida.")
             .LessThanOrEqualTo(DateTime.UtcNow.Date)
-            .WithMessage("Transaction date cannot be in the future.");
+            .WithMessage("La fecha de la compra no puede ser una fecha futura.");
     }
 }

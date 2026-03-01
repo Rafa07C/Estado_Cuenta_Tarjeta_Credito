@@ -1,25 +1,63 @@
+
+using CreditCardStatement.Api.Infrastructure;
+using CreditCardStatement.Api.Middleware;
+using CreditCardStatement.Core.Interfaces;
+using MediatR;
+using Microsoft.OpenApi.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
+// Controllers
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "CreditCard Statement API",
+        Version = "v1",
+        Description = "REST API for Credit Card Statement management"
+    });
+});
+
+// AutoMapper
+builder.Services.AddAutoMapper(typeof(CreditCardStatement.Api.Mappings.MappingProfile));
+
+// MediatR
+builder.Services.AddMediatR(typeof(Program));
+
+// UnitOfWork
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// Healthcheck
+builder.Services.AddHealthChecks()
+    .AddSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")!);
+
+// CORS (para que el MVC pueda consumir la API)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowMvc", policy =>
+        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Middleware
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "CreditCard Statement API v1"));
 }
 
-app.UseHttpsRedirection();
-
+app.UseCors("AllowMvc");
 app.UseAuthorization();
-
 app.MapControllers();
+
+// Healthcheck endpoint
+app.MapHealthChecks("/health");
 
 app.Run();
