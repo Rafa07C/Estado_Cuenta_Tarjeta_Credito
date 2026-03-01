@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CreditCardStatement.Api", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CreditCardStatement.Mvc", "CreditCardStatement.Mvc\CreditCardStatement.Mvc.csproj", "{36892C99-6A05-4F32-9552-E995C4692180}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CreditCardStatement.Core", "CreditCardStatement.Core\CreditCardStatement.Core.csproj", "{95171761-2151-4F16-A624-2C96CD7E05D4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{36892C99-6A05-4F32-9552-E995C4692180}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{36892C99-6A05-4F32-9552-E995C4692180}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{36892C99-6A05-4F32-9552-E995C4692180}.Release|Any CPU.Build.0 = Release|Any CPU
+		{95171761-2151-4F16-A624-2C96CD7E05D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{95171761-2151-4F16-A624-2C96CD7E05D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{95171761-2151-4F16-A624-2C96CD7E05D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{95171761-2151-4F16-A624-2C96CD7E05D4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
