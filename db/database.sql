@@ -1,4 +1,8 @@
--- Create DB
+-- =============================================
+-- CreditCardStatementDb - Script de base de datos
+-- =============================================
+
+-- Crear base de datos
 IF DB_ID('CreditCardStatementDb') IS NULL
 BEGIN
     CREATE DATABASE CreditCardStatementDb;
@@ -8,7 +12,10 @@ GO
 USE CreditCardStatementDb;
 GO
 
--- Tables (drop if you want a clean recreate during dev)
+-- =============================================
+-- Tablas
+-- =============================================
+
 IF OBJECT_ID('dbo.Transactions', 'U') IS NOT NULL DROP TABLE dbo.Transactions;
 IF OBJECT_ID('dbo.CreditCards', 'U') IS NOT NULL DROP TABLE dbo.CreditCards;
 IF OBJECT_ID('dbo.CardHolders', 'U') IS NOT NULL DROP TABLE dbo.CardHolders;
@@ -57,18 +64,18 @@ GO
 CREATE TABLE dbo.StatementConfig
 (
     ConfigId              INT NOT NULL PRIMARY KEY,
-    InterestRate          DECIMAL(9,4) NOT NULL, -- e.g. 0.25 = 25%
-    MinimumPaymentRate    DECIMAL(9,4) NOT NULL, -- e.g. 0.05 = 5%
+    InterestRate          DECIMAL(9,4) NOT NULL, -- ej. 0.25 = 25%
+    MinimumPaymentRate    DECIMAL(9,4) NOT NULL, -- ej. 0.05 = 5%
     UpdatedAt             DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
     CONSTRAINT CK_Config_Rates CHECK (InterestRate >= 0 AND MinimumPaymentRate >= 0)
 );
 GO
 
-/* =========================
-   Seed data (demo)
-   ========================= */
+-- =============================================
+-- Datos de prueba
+-- =============================================
 
--- Config singleton row (ConfigId=1) - idempotent upsert style (run once per script)
+-- Configuración (fila única ConfigId=1)
 IF EXISTS (SELECT 1 FROM dbo.StatementConfig WHERE ConfigId = 1)
 BEGIN
     UPDATE dbo.StatementConfig
@@ -86,23 +93,20 @@ GO
 
 DECLARE @CardHolderId INT;
 
--- Insert CardHolder
 INSERT INTO dbo.CardHolders(FullName)
 VALUES (N'Iván Patiño');
 
--- Get the identity value generated in THIS scope
 SET @CardHolderId = CAST(SCOPE_IDENTITY() AS INT);
 
--- Insert CreditCard using the real CardHolderId
 INSERT INTO dbo.CreditCards(CardHolderId, CardNumberLast4, CreditLimit)
 VALUES (@CardHolderId, '1234', 10000.00);
 GO
 
-/* =========================
-   Stored Procedures
-   ========================= */
+-- =============================================
+-- Procedimientos Almacenados
+-- =============================================
 
--- Add Purchase
+-- Agregar Compra
 IF OBJECT_ID('dbo.sp_AddPurchase', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_AddPurchase;
 GO
 CREATE PROCEDURE dbo.sp_AddPurchase
@@ -114,21 +118,25 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- Basic validations
+    -- Validaciones básicas
     IF @Amount <= 0
-        THROW 50001, 'Amount must be greater than 0.', 1;
+        THROW 50001, 'El monto debe ser mayor a 0.', 1;
 
     IF @Description IS NULL OR LTRIM(RTRIM(@Description)) = ''
-        THROW 50002, 'Description is required for purchases.', 1;
+        THROW 50002, 'La descripción es requerida para las compras.', 1;
 
-    -- Card must exist and be active
+    -- La tarjeta debe existir y estar activa
     IF NOT EXISTS (SELECT 1 FROM dbo.CreditCards WHERE CardId = @CardId)
-        THROW 50020, 'CardId does not exist.', 1;
+        THROW 50020, 'El CardId no existe.', 1;
 
     IF EXISTS (SELECT 1 FROM dbo.CreditCards WHERE CardId = @CardId AND IsActive = 0)
-        THROW 50021, 'Card is inactive.', 1;
+        THROW 50021, 'La tarjeta está inactiva.', 1;
 
-    -- Optional (recommended): prevent exceeding credit limit
+    -- La fecha no puede ser futura
+    IF @TxDate > CAST(GETDATE() AS DATE)
+        THROW 50023, 'La fecha de la compra no puede ser futura.', 1;
+
+    -- Validar que la compra no exceda el límite de crédito
     DECLARE @CurrentBalance DECIMAL(18,2) =
     (
         SELECT ISNULL(SUM(CASE WHEN TxType='PURCHASE' THEN Amount ELSE -Amount END), 0.00)
@@ -142,14 +150,14 @@ BEGIN
     );
 
     IF (@CurrentBalance + @Amount) > @CreditLimit
-        THROW 50022, 'Purchase exceeds credit limit.', 1;
+        THROW 50022, 'La compra excede el límite de crédito disponible.', 1;
 
     INSERT INTO dbo.Transactions(CardId, TxDate, Description, Amount, TxType)
     VALUES (@CardId, @TxDate, @Description, @Amount, 'PURCHASE');
 END
 GO
 
--- Add Payment
+-- Agregar Pago
 IF OBJECT_ID('dbo.sp_AddPayment', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_AddPayment;
 GO
 CREATE PROCEDURE dbo.sp_AddPayment
@@ -160,22 +168,38 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    -- Validaciones básicas
     IF @Amount <= 0
-        THROW 50003, 'Amount must be greater than 0.', 1;
+        THROW 50003, 'El monto debe ser mayor a 0.', 1;
 
-    -- Card must exist and be active
+    -- La tarjeta debe existir y estar activa
     IF NOT EXISTS (SELECT 1 FROM dbo.CreditCards WHERE CardId = @CardId)
-        THROW 50030, 'CardId does not exist.', 1;
+        THROW 50030, 'El CardId no existe.', 1;
 
     IF EXISTS (SELECT 1 FROM dbo.CreditCards WHERE CardId = @CardId AND IsActive = 0)
-        THROW 50031, 'Card is inactive.', 1;
+        THROW 50031, 'La tarjeta está inactiva.', 1;
+
+    -- Validar que el pago no exceda el saldo actual
+    DECLARE @CurrentBalance DECIMAL(18,2) =
+    (
+        SELECT ISNULL(SUM(CASE WHEN TxType='PURCHASE' THEN Amount ELSE -Amount END), 0.00)
+        FROM dbo.Transactions
+        WHERE CardId = @CardId
+    );
+
+    IF @Amount > @CurrentBalance
+        THROW 50032, 'El monto del pago no puede exceder el saldo actual.', 1;
+
+    -- La fecha no puede ser futura
+    IF @TxDate > CAST(GETDATE() AS DATE)
+        THROW 50033, 'La fecha del pago no puede ser futura.', 1;
 
     INSERT INTO dbo.Transactions(CardId, TxDate, Description, Amount, TxType)
     VALUES (@CardId, @TxDate, NULL, @Amount, 'PAYMENT');
 END
 GO
 
--- Get Month Transactions (purchases + payments, descending)
+-- Obtener Transacciones del Mes (compras y pagos, orden descendente)
 IF OBJECT_ID('dbo.sp_GetMonthTransactions', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_GetMonthTransactions;
 GO
 CREATE PROCEDURE dbo.sp_GetMonthTransactions
@@ -186,9 +210,9 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- Validate card exists
+    -- Validar que la tarjeta existe
     IF NOT EXISTS (SELECT 1 FROM dbo.CreditCards WHERE CardId = @CardId)
-        THROW 50040, 'CardId does not exist.', 1;
+        THROW 50040, 'El CardId no existe.', 1;
 
     DECLARE @Start DATE = DATEFROMPARTS(@Year, @Month, 1);
     DECLARE @End   DATE = DATEADD(MONTH, 1, @Start);
@@ -207,7 +231,7 @@ BEGIN
 END
 GO
 
--- Get Statement (includes calculated fields)
+-- Obtener Estado de Cuenta (incluye campos calculados)
 IF OBJECT_ID('dbo.sp_GetStatement', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_GetStatement;
 GO
 CREATE PROCEDURE dbo.sp_GetStatement
@@ -218,12 +242,12 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- Validate card exists and active
+    -- Validar que la tarjeta existe y está activa
     IF NOT EXISTS (SELECT 1 FROM dbo.CreditCards WHERE CardId = @CardId)
-        THROW 50011, 'CardId does not exist.', 1;
+        THROW 50011, 'El CardId no existe.', 1;
 
     IF EXISTS (SELECT 1 FROM dbo.CreditCards WHERE CardId = @CardId AND IsActive = 0)
-        THROW 50012, 'Card is inactive.', 1;
+        THROW 50012, 'La tarjeta está inactiva.', 1;
 
     DECLARE @Start DATE = DATEFROMPARTS(@Year, @Month, 1);
     DECLARE @End   DATE = DATEADD(MONTH, 1, @Start);
@@ -240,11 +264,11 @@ BEGIN
     FROM dbo.StatementConfig
     WHERE ConfigId = 1;
 
-    -- Validate config exists
+    -- Validar que existe la configuración
     IF @InterestRate IS NULL OR @MinPayRate IS NULL
-        THROW 50010, 'StatementConfig (ConfigId=1) is missing. Seed or insert config first.', 1;
+        THROW 50010, 'La configuración del estado de cuenta (ConfigId=1) no existe.', 1;
 
-    -- Current balance: purchases - payments (all time)
+    -- Saldo actual: compras menos pagos (histórico total)
     DECLARE @CurrentBalance DECIMAL(18,2) =
     (
         SELECT ISNULL(SUM(CASE WHEN TxType='PURCHASE' THEN Amount ELSE -Amount END), 0.00)
@@ -277,7 +301,7 @@ BEGIN
           AND TxDate >= @PrevStart AND TxDate < @PrevEnd
     );
 
-    -- If balance is negative (overpayment), clamp to 0 for interest/min payment calculations
+    -- Si el saldo es negativo (sobrepago), se usa 0 para los cálculos
     DECLARE @BalanceForCalc DECIMAL(18,2) = CASE WHEN @CurrentBalance > 0 THEN @CurrentBalance ELSE 0 END;
 
     DECLARE @InterestBonificable DECIMAL(18,2) = ROUND(@BalanceForCalc * @InterestRate, 2);
