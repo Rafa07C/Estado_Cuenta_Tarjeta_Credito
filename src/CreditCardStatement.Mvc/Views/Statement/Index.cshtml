@@ -1,0 +1,198 @@
+@model CreditCardStatement.Mvc.ViewModels.StatementViewModel
+@{
+    ViewData["Title"] = "Estado de Cuenta";
+    var months = System.Globalization.CultureInfo.GetCultureInfo("es-HN").DateTimeFormat.MonthNames;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="text-danger fw-bold">Estado de Cuenta</h2>
+    @if (Model.Statement != null)
+    {
+        <a href="/Statement/ExportPdf?cardId=@Model.CardId&month=@Model.SelectedMonth&year=@Model.SelectedYear"
+           class="btn btn-danger">
+            📄 Exportar PDF
+        </a>
+    }
+</div>
+
+<!-- Filtro de mes/año -->
+<div class="card mb-4 border-0 shadow-sm">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-auto">
+                <label class="form-label fw-semibold">Mes</label>
+                <select name="month" class="form-select">
+                    @for (int i = 1; i <= 12; i++)
+                    {
+                        <option value="@i" selected="@(Model.SelectedMonth == i)">
+                            @months[i - 1]
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="col-auto">
+                <label class="form-label fw-semibold">Año</label>
+                <input type="number" name="year" class="form-control" value="@Model.SelectedYear" min="2020" max="2099" />
+            </div>
+            <input type="hidden" name="cardId" value="@Model.CardId" />
+            <div class="col-auto">
+                <button type="submit" class="btn btn-danger">Consultar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.Statement == null)
+{
+    <div class="alert alert-warning">No se encontró información para el período seleccionado.</div>
+}
+else
+{
+    var s = Model.Statement;
+
+    <!-- Datos del titular -->
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">Información de la Tarjeta</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Titular:</strong> @s.CardHolderName</p>
+                    <p><strong>Tarjeta:</strong> **** **** **** @s.CardNumberLast4</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Límite de Crédito:</strong> @s.CreditLimit.ToString("C")</p>
+                    <p><strong>Saldo Disponible:</strong>
+                        <span class="text-success fw-bold">@s.AvailableBalance.ToString("C")</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen financiero -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Saldo Actual</p>
+                    <h4 class="text-danger fw-bold">@s.CurrentBalance.ToString("C")</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Compras Este Mes</p>
+                    <h4 class="fw-bold">@s.PurchasesThisMonth.ToString("C")</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Compras Mes Anterior</p>
+                    <h4 class="fw-bold">@s.PurchasesPreviousMonth.ToString("C")</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Saldo Disponible</p>
+                    <h4 class="text-success fw-bold">@s.AvailableBalance.ToString("C")</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cálculos -->
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">Resumen de Pagos</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td>Tasa de Interés:</td>
+                            <td class="fw-bold">@((s.InterestRate * 100).ToString("F2"))%</td>
+                        </tr>
+                        <tr>
+                            <td>Interés Bonificable:</td>
+                            <td class="fw-bold">@s.InterestBonificable.ToString("C")</td>
+                        </tr>
+                        <tr>
+                            <td>Porcentaje Saldo Mínimo:</td>
+                            <td class="fw-bold">@((s.MinimumPaymentRate * 100).ToString("F2"))%</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td>Cuota Mínima a Pagar:</td>
+                            <td class="fw-bold text-warning">@s.MinimumPayment.ToString("C")</td>
+                        </tr>
+                        <tr>
+                            <td>Monto Total a Pagar:</td>
+                            <td class="fw-bold text-danger">@s.TotalToPay.ToString("C")</td>
+                        </tr>
+                        <tr>
+                            <td>Total de Contado con Intereses:</td>
+                            <td class="fw-bold text-danger">@s.TotalToPayWithInterest.ToString("C")</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transacciones del mes -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Compras del Mes</h5>
+        </div>
+        <div class="card-body p-0">
+            @if (!Model.Transactions.Any())
+            {
+                <p class="p-3 text-muted">No hay transacciones para este período.</p>
+            }
+            else
+            {
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Descripción</th>
+                            <th>Tipo</th>
+                            <th class="text-end">Monto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var tx in Model.Transactions)
+                        {
+                            <tr>
+                                <td>@tx.TxDate.ToString("dd/MM/yyyy")</td>
+                                <td>@(tx.Description ?? "-")</td>
+                                <td>
+                                    @if (tx.TxType == "PURCHASE")
+                                    {
+                                        <span class="badge bg-danger">Compra</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Pago</span>
+                                    }
+                                </td>
+                                <td class="text-end">@tx.Amount.ToString("C")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+}

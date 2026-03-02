@@ -8,30 +8,30 @@ namespace CreditCardStatement.Api.Infrastructure.Repositories;
 
 public class StatementRepository : IStatementRepository
 {
-    private readonly IDbConnection _db;
+    private readonly string _connectionString;
 
-    public StatementRepository(IDbConnection db)
+    public StatementRepository(string connectionString)
     {
-        _db = db;
+        _connectionString = connectionString;
     }
 
     public async Task<StatementDto?> GetStatementAsync(int cardId, int month, int year)
     {
-        var result = await _db.QueryFirstOrDefaultAsync<StatementDto>(
+        using var db = new SqlConnection(_connectionString);
+        return await db.QueryFirstOrDefaultAsync<StatementDto>(
             "dbo.sp_GetStatement",
             new { CardId = cardId, Month = month, Year = year },
             commandType: CommandType.StoredProcedure
         );
-        return result;
     }
 
     public async Task<IEnumerable<TransactionDto>> GetMonthTransactionsAsync(int cardId, int month, int year)
     {
-        var result = await _db.QueryAsync<TransactionDto>(
+        using var db = new SqlConnection(_connectionString);
+        return await db.QueryAsync<TransactionDto>(
             "dbo.sp_GetMonthTransactions",
             new { CardId = cardId, Month = month, Year = year },
             commandType: CommandType.StoredProcedure
         );
-        return result;
     }
 }

@@ -1,0 +1,79 @@
+@model CreditCardStatement.Mvc.ViewModels.TransactionViewModel
+@{
+    ViewData["Title"] = "Historial de Transacciones";
+    var months = System.Globalization.CultureInfo.GetCultureInfo("es-HN").DateTimeFormat.MonthNames;
+}
+
+<h2 class="text-danger fw-bold mb-4">Historial de Transacciones</h2>
+
+<div class="card mb-4 border-0 shadow-sm">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-auto">
+                <label class="form-label fw-semibold">Mes</label>
+                <select name="month" class="form-select">
+                    @for (int i = 1; i <= 12; i++)
+                    {
+                        <option value="@i" selected="@(Model.SelectedMonth == i)">
+                            @months[i - 1]
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="col-auto">
+                <label class="form-label fw-semibold">Año</label>
+                <input type="number" name="year" class="form-control"
+                       value="@Model.SelectedYear" min="2020" max="2099" />
+            </div>
+            <input type="hidden" name="cardId" value="@Model.CardId" />
+            <div class="col-auto">
+                <button type="submit" class="btn btn-danger">Consultar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">Movimientos del Mes</h5>
+    </div>
+    <div class="card-body p-0">
+        @if (!Model.Transactions.Any())
+        {
+            <p class="p-3 text-muted">No hay transacciones para este período.</p>
+        }
+        else
+        {
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Descripción</th>
+                        <th>Tipo</th>
+                        <th class="text-end">Monto</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var tx in Model.Transactions)
+                    {
+                        <tr>
+                            <td>@tx.TxDate.ToString("dd/MM/yyyy")</td>
+                            <td>@(tx.Description ?? "-")</td>
+                            <td>
+                                @if (tx.TxType == "PURCHASE")
+                                {
+                                    <span class="badge bg-danger">Compra</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">Pago</span>
+                                }
+                            </td>
+                            <td class="text-end">@tx.Amount.ToString("C")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

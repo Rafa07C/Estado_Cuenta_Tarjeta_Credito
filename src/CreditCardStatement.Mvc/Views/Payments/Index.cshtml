@@ -1,0 +1,37 @@
+@model CreditCardStatement.Mvc.ViewModels.AddPaymentViewModel
+@{
+    ViewData["Title"] = "Registrar Pago";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">Registrar Pago</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="CardId" />
+
+                    <div class="mb-3">
+                        <label asp-for="TxDate" class="form-label fw-semibold">Fecha del Pago</label>
+                        <input asp-for="TxDate" type="date" class="form-control"
+                               value="@Model.TxDate.ToString("yyyy-MM-dd")" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Amount" class="form-label fw-semibold">Monto (L)</label>
+                        <input asp-for="Amount" type="number" class="form-control"
+                               step="0.01" min="0.01" placeholder="0.00" />
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">Registrar Pago</button>
+                        <a asp-controller="Statement" asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

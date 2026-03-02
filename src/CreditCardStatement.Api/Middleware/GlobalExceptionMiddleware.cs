@@ -36,7 +36,7 @@ public class GlobalExceptionMiddleware
             ArgumentException => (HttpStatusCode.BadRequest, ex.Message),
             KeyNotFoundException => (HttpStatusCode.NotFound, ex.Message),
             InvalidOperationException => (HttpStatusCode.BadRequest, ex.Message),
-            _ => (HttpStatusCode.InternalServerError, "An unexpected error occurred.")
+            _ => (HttpStatusCode.InternalServerError, ex.Message + " | " + ex.InnerException?.Message)
         };
 
         context.Response.StatusCode = (int)statusCode;
