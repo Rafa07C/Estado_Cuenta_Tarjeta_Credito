@@ -1,0 +1,125 @@
+{
+  "info": {
+    "_postman_id": "ab905790-d92a-4113-9275-0b5f416feab9",
+    "name": "CreditCardStatement API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "36204276"
+  },
+  "item": [
+    {
+      "name": "GET  Estado de Cuenta",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/Statement/1/2026/3",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "Statement",
+            "1",
+            "2026",
+            "3"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "GET Transacciones del Mes",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/Transactions/1/2026/3",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "Transactions",
+            "1",
+            "2026",
+            "3"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "POST Registrar Compra",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"cardId\": 1,\r\n  \"txDate\": \"2026-03-04\",\r\n  \"description\": \"Audifonos\",\r\n  \"amount\": 250.00\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/transactions/purchase",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "transactions",
+            "purchase"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "POST Registrar Pago",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"cardId\": 1,\r\n  \"txDate\": \"2026-03-04\",\r\n  \"amount\": 200.00\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/transactions/payment",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "transactions",
+            "payment"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "GET Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
