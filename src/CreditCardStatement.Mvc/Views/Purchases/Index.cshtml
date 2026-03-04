@@ -12,28 +12,24 @@
                 <form method="post" novalidate>
                     @Html.AntiForgeryToken()
                     <input type="hidden" asp-for="CardId" />
-
                     <div class="mb-3">
                         <label asp-for="TxDate" class="form-label fw-semibold">Fecha de Compra</label>
                         <input asp-for="TxDate" type="date" class="form-control"
                                value="@Model.TxDate.ToString("yyyy-MM-dd")" />
                         <span asp-validation-for="TxDate" class="text-danger small"></span>
                     </div>
-
                     <div class="mb-3">
                         <label asp-for="Description" class="form-label fw-semibold">Descripción</label>
                         <input asp-for="Description" type="text" class="form-control"
                                placeholder="Ej: Supermercado La Colonia" maxlength="200" />
                         <span asp-validation-for="Description" class="text-danger small"></span>
                     </div>
-
                     <div class="mb-3">
                         <label asp-for="Amount" class="form-label fw-semibold">Monto</label>
                         <input asp-for="Amount" type="number" class="form-control"
                                step="0.01" placeholder="0.00" />
                         <span asp-validation-for="Amount" class="text-danger small"></span>
                     </div>
-
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-danger">Registrar Compra</button>
                         <a asp-controller="Statement" asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
@@ -43,7 +39,6 @@
         </div>
     </div>
 </div>
-
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 }
