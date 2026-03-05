@@ -1,4 +1,4 @@
-
+using CreditCardStatement.Api.Hubs;
 using CreditCardStatement.Api.Infrastructure;
 using CreditCardStatement.Api.Middleware;
 using CreditCardStatement.Core.Interfaces;
@@ -35,12 +35,18 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddHealthChecks()
     .AddSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")!);
 
-// CORS (para que el MVC pueda consumir la API)
+// CORS (para que el MVC pueda consumir la API) - SignalR requiere AllowCredentials
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowMvc", policy =>
-        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+        policy.WithOrigins("https://localhost:7063", "http://localhost:5063")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials());
 });
+
+// SignalR
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -59,5 +65,8 @@ app.MapControllers();
 
 // Healthcheck endpoint
 app.MapHealthChecks("/health");
+
+// SignalR Hub
+app.MapHub<TransactionHub>("/hubs/transactions");
 
 app.Run();
