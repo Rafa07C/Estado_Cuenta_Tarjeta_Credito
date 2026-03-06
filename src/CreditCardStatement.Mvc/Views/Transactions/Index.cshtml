@@ -104,8 +104,12 @@
 @section Scripts {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
 <script>
+    const apiBaseUrl = "@(ViewBag.ApiBaseUrl ?? "https://localhost:7213")";
+
     const connection = new signalR.HubConnectionBuilder()
-        .withUrl("https://localhost:7213/hubs/transactions")
+        .withUrl(apiBaseUrl + "/hubs/transactions", {
+            withCredentials: true
+        })
         .withAutomaticReconnect()
         .build();
 
@@ -113,7 +117,6 @@
         const tbody = document.getElementById("transactions-tbody");
         if (!tbody) return;
 
-        // Eliminar fila de "no hay transacciones" si existe
         const emptyRow = document.getElementById("empty-row");
         if (emptyRow) emptyRow.remove();
 
@@ -136,7 +139,6 @@
 
         tbody.insertAdjacentHTML("afterbegin", fila);
 
-        // Quitar resaltado amarillo después de 3 segundos
         setTimeout(() => {
             const filaResaltada = tbody.querySelector(".table-warning");
             if (filaResaltada) filaResaltada.classList.remove("table-warning");

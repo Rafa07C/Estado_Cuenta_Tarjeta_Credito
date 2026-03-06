@@ -39,10 +39,14 @@ builder.Services.AddHealthChecks()
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowMvc", policy =>
-        policy.WithOrigins("https://localhost:7063", "http://localhost:5063")
-              .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials());
+        policy.WithOrigins(
+                "https://localhost:7063",
+                "http://localhost:5063",
+                "https://creditcard-mvc-rafael-bvfrbpf0bsf0ayak.canadacentral-01.azurewebsites.net"
+            )
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials());
 });
 
 // SignalR
@@ -53,11 +57,16 @@ var app = builder.Build();
 // Middleware
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
-if (app.Environment.IsDevelopment())
+// Swagger habilitado también en Production (Azure)
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "CreditCard Statement API v1"));
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "CreditCard Statement API v1");
+    c.RoutePrefix = "swagger";
+});
+
+// Redirección a Swagger en la raíz
+app.MapGet("/", () => Results.Redirect("/swagger"));
 
 app.UseCors("AllowMvc");
 app.UseAuthorization();
