@@ -3,7 +3,7 @@
 **Autor:** Rafael Orlando Guardado Díaz  
 **Repositorio:** [https://github.com/Rafa07C/Estado_Cuenta_Tarjeta_Credito](https://github.com/Rafa07C/Estado_Cuenta_Tarjeta_Credito)
 
-> Prueba Técnica — Desarrollador de Servicios Web Senior | Banco Atlántida
+> Prueba Técnica — Desarrollador de Servicios Web
 
 ---
 
